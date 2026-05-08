@@ -1,4 +1,3 @@
-let emulatorInstance = null;
 let activeBinds = {};
 
 window.addEventListener('message', async (e) => {
@@ -8,11 +7,6 @@ window.addEventListener('message', async (e) => {
   }
 
   if (e.data.action === 'load') {
-    if (emulatorInstance) {
-      try { emulatorInstance.destroy(); } catch(err){}
-      document.getElementById('game-container').innerHTML = '';
-    }
-
     activeBinds = e.data.bindings || {}; 
     const blobUrl = URL.createObjectURL(new Blob([e.data.buffer]));
     const ext = e.data.name.split('.').pop().toLowerCase();
@@ -23,34 +17,26 @@ window.addEventListener('message', async (e) => {
       pbp: 'pcsx_rearmed', chd: 'pcsx_rearmed', iso: 'pcsx_rearmed', cue: 'pcsx_rearmed', bin: 'pcsx_rearmed'
     };
 
-    // Notice we removed the dataPath line entirely!
-    emulatorInstance = new EmulatorJS('#game-container', {
-      gameName: e.data.name,
-      gameUrl: blobUrl,
-      system: sysMap[ext] || 'auto',
-      startOnLoad: true
-    });
-
-    emulatorInstance.on('ready', () => {
-      if (emulatorInstance.setVolume) emulatorInstance.setVolume(e.data.volume);
-      setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
-    });
+    // Official EmulatorJS Version 4 Configuration
+    window.EJS_player = '#game-container';
+    window.EJS_gameUrl = blobUrl;
+    window.EJS_core = sysMap[ext] || 'nes';
+    window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
+    window.EJS_startOnLoaded = true;
+    window.EJS_volume = e.data.volume;
+    
+    // Inject the official stable CDN loader
+    const script = document.createElement('script');
+    script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
+    document.body.appendChild(script);
   }
 
-  if (e.data.action === 'volume' && emulatorInstance?.setVolume) {
-    emulatorInstance.setVolume(e.data.volume);
-  }
-
-  if (e.data.action === 'kill' && emulatorInstance) {
-    try { 
-      if (emulatorInstance.setVolume) emulatorInstance.setVolume(0);
-      emulatorInstance.destroy(); 
-    } catch(err){}
-    emulatorInstance = null;
-    document.getElementById('game-container').innerHTML = '';
+  if (e.data.action === 'volume' && window.EJS_emulator) {
+    try { window.EJS_emulator.setVolume(e.data.volume); } catch(err){}
   }
 });
 
+// --- THE INPUT FIREWALL ---
 const keyCodeMap = {
   'ArrowUp': 38, 'ArrowDown': 40, 'ArrowLeft': 37, 'ArrowRight': 39,
   'Enter': 13, 'ShiftRight': 16, 'ShiftLeft': 16, 'Space': 32,
