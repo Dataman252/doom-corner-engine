@@ -1,4 +1,4 @@
-window.EJS_pathtodata = 'emulatorjs/data/';
+window.EJS_pathtodata = 'https://dataman252.github.io/doom-corner-engine/emulatorjs/data/';
 let emulatorInstance = null;
 let activeBinds = {};
 
