@@ -1,4 +1,3 @@
-window.EJS_pathtodata = 'https://dataman252.github.io/doom-corner-engine/emulatorjs/data/';
 let emulatorInstance = null;
 let activeBinds = {};
 
@@ -15,9 +14,7 @@ window.addEventListener('message', async (e) => {
     }
 
     activeBinds = e.data.bindings || {}; 
-    // NEW: We receive the raw ArrayBuffer directly from the extension now
     const blobUrl = URL.createObjectURL(new Blob([e.data.buffer]));
-
     const ext = e.data.name.split('.').pop().toLowerCase();
     
     const sysMap = { 
@@ -26,11 +23,11 @@ window.addEventListener('message', async (e) => {
       pbp: 'pcsx_rearmed', chd: 'pcsx_rearmed', iso: 'pcsx_rearmed', cue: 'pcsx_rearmed', bin: 'pcsx_rearmed'
     };
 
+    // Notice we removed the dataPath line entirely!
     emulatorInstance = new EmulatorJS('#game-container', {
       gameName: e.data.name,
       gameUrl: blobUrl,
       system: sysMap[ext] || 'auto',
-      dataPath: window.EJS_pathtodata,
       startOnLoad: true
     });
 
@@ -66,16 +63,12 @@ for (let i = 65; i <= 90; i++) {
 
 function handleKey(e) {
   if (e.__remapped) return; 
-
-  // Allow System/Browser Keys to bypass the firewall so you can still use the web browser normally
   if (e.code === 'Escape' || (e.code.startsWith('F') && e.code !== 'F1' && e.code !== 'F2' && e.code !== 'F4')) return;
-
-  // The Firewall: Prevents any key from causing ghost inputs in the emulator
+  
   e.stopPropagation();
   e.stopImmediatePropagation();
   e.preventDefault();
 
-  // Only dispatch the key if it is explicitly listed in your UI Index
   if (activeBinds[e.code]) {
     const targetCode = activeBinds[e.code];
     const numericCode = keyCodeMap[targetCode] || 0;
