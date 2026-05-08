@@ -24,8 +24,8 @@ window.addEventListener('message', async (e) => {
     window.EJS_pathtodata = 'https://cdn.emulatorjs.org/stable/data/';
     window.EJS_startOnLoaded = true;
     window.EJS_volume = e.data.volume;
+    window.EJS_gameID = e.data.name; // FIX: This clears the missing ID warning!
     
-    // Inject the official stable CDN loader
     const script = document.createElement('script');
     script.src = 'https://cdn.emulatorjs.org/stable/data/loader.js';
     document.body.appendChild(script);
@@ -59,18 +59,27 @@ function handleKey(e) {
     const targetCode = activeBinds[e.code];
     const numericCode = keyCodeMap[targetCode] || 0;
 
+    // FIX: Translate standard 'KeyX' codes into actual lowercase letters for the engine
+    let realKey = targetCode;
+    if (targetCode.startsWith('Key')) realKey = targetCode.replace('Key', '').toLowerCase();
+    else if (targetCode.startsWith('Shift')) realKey = 'Shift';
+    else if (targetCode.startsWith('Control')) realKey = 'Control';
+    else if (targetCode.startsWith('Alt')) realKey = 'Alt';
+    else if (targetCode === 'Space') realKey = ' ';
+
     const newEvent = new KeyboardEvent(e.type, {
       code: targetCode,
-      key: targetCode,
+      key: realKey,
       bubbles: true,
-      cancelable: true
+      cancelable: true,
+      composed: true
     });
 
     Object.defineProperty(newEvent, 'keyCode', { get: () => numericCode });
     Object.defineProperty(newEvent, 'which', { get: () => numericCode });
 
     newEvent.__remapped = true;
-    e.target.dispatchEvent(newEvent);
+    window.dispatchEvent(newEvent); // Dispatch to window so V4 catches it securely
   }
 }
 
